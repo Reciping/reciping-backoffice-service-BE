@@ -1,42 +1,55 @@
 package com.three.recipingbackofficeservicebe.global.exception;
 
-import com.three.recipingbackofficeservicebe.common.dto.ExceptionDto;
-import com.three.recipingbackofficeservicebe.global.exception.custom.UserNotFoundException;
-import jakarta.persistence.EntityNotFoundException;
-import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.ControllerAdvice;
+import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 
-@Slf4j(topic = "GlobalExceptionHandler")
-@ControllerAdvice
+@RestControllerAdvice
 public class GlobalExceptionHandler {
 
-    @ExceptionHandler(UserNotFoundException.class)
-    public ResponseEntity<ExceptionDto> userNotFoundException(final UserNotFoundException e) {
-        log.error("UserNotFoundException: ", e);
-        return createResponse(HttpStatus.BAD_REQUEST, e.getMessage());
+    private static final Logger errorLogger = LoggerFactory.getLogger("ERROR_LOGGER");
+
+    @ExceptionHandler(MethodArgumentTypeMismatchException.class)
+    public ResponseEntity<String> handleTypeMismatch(MethodArgumentTypeMismatchException ex) {
+        errorLogger.error("Invalid argument type", ex);
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body("Invalid input: " + ex.getName() + " must be of type " + ex.getRequiredType().getSimpleName());
     }
 
-    @ExceptionHandler(EntityNotFoundException.class)
-    public ResponseEntity<ExceptionDto> entityNotFoundException(final EntityNotFoundException e) {
-        log.error("EntityNotFoundException: ", e);
-        return createResponse(HttpStatus.BAD_REQUEST, e.getMessage());
+    @ExceptionHandler(MissingServletRequestParameterException.class)
+    public ResponseEntity<String> handleMissingParam(MissingServletRequestParameterException ex) {
+        errorLogger.error("Missing request parameter", ex);
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body("Missing required parameter: " + ex.getParameterName());
+    }
+
+    @ExceptionHandler(HttpMessageNotReadableException.class)
+    public ResponseEntity<String> handleUnreadable(HttpMessageNotReadableException ex) {
+        errorLogger.error("Unreadable message", ex);
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body("Malformed request body: " + ex.getMostSpecificCause().getMessage());
+    }
+
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    public ResponseEntity<String> handleValidation(MethodArgumentNotValidException ex) {
+        errorLogger.error("Validation failed", ex);
+        String errorMsg = ex.getBindingResult().getFieldErrors().stream()
+                .map(error -> error.getField() + ": " + error.getDefaultMessage())
+                .findFirst()
+                .orElse("Validation error");
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorMsg);
     }
 
     @ExceptionHandler(Exception.class)
-    ResponseEntity<ExceptionDto> exception(final Exception e) {
-        log.error("Exception: ", e);
-        return createResponse(HttpStatus.BAD_REQUEST, e.getMessage());
-    }
-
-    private ResponseEntity<ExceptionDto> createResponse(
-            final HttpStatus status,
-            final String message
-    ) {
-        return ResponseEntity
-                .status(HttpStatus.OK)
-                .body(new ExceptionDto(status, message));
+    public ResponseEntity<String> handleException(Exception ex) {
+        errorLogger.error("Unexpected error occurred", ex);
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Unexpected error: " + ex.getMessage());
     }
 }

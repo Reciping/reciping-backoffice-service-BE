@@ -12,40 +12,18 @@
         </encoder>
     </appender>
 
-    <!-- 파일 기반 Appender(=파일에 로그를 기록) : 로그를 어디에 출력할지 설정하는 부분 -->
-    <appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
-        <file>${LOG_PATH}/${LOG_FILE}.log</file> <!-- 출력 예시) /var/log/reciping/backoffice-service/backoffice-service-app.log -->
-
+    <appender name="CSV_FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>${LOG_PATH}/${LOG_FILE}.csv</file>
         <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
-            <fileNamePattern>${LOG_PATH}/${LOG_FILE}.%d{yyyy-MM-dd}.log</fileNamePattern>
+            <fileNamePattern>${LOG_PATH}/${LOG_FILE}.%d{yyyy-MM-dd}.csv</fileNamePattern>
             <maxHistory>14</maxHistory>
         </rollingPolicy>
         <encoder>
-            <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level [%X{traceId}] %logger{36} - %msg%n</pattern>
-            <immediateFlush>true</immediateFlush> <!-- 로그를 버퍼에 모았다가 쓰지 않고, 매번 바로 디스크에 flush(쓰기 완료)하겠다는 뜻 -->
+            <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS}\t%level\t%thread\t%logger{36}\t%msg\t%X{traceId}%n</pattern>
         </encoder>
     </appender>
 
-    <!-- 커스텀 파일 로그 기반 Appender(AdminRecipeController 에 대한 커스텀 파일 로그 기록) -->
-    <appender name="ADMIN_RECIPE_CONTROLLER_LOG" class="ch.qos.logback.core.rolling.RollingFileAppender">
-        <file>${LOG_PATH}/BackofficeController.log</file>
-
-        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
-            <fileNamePattern>${LOG_PATH}/BackofficeController.%d{yyyy-MM-dd}.log</fileNamePattern>
-            <maxHistory>30</maxHistory> <!-- 사인업 : 30일 이상 / 겟마이 프로필 : 14일 / 업데이트마이프로필 : 14일 / 나머지 : 7일 -->
-        </rollingPolicy>
-        <encoder>
-            <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level [%X{traceId}] %logger{36} - %msg%n</pattern>
-            <immediateFlush>true</immediateFlush>
-        </encoder>
-    </appender>
-
-    <appender name="JSON_FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
-        <file>${LOG_PATH}/${LOG_FILE}.json</file>
-        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
-            <fileNamePattern>${LOG_PATH}/${LOG_FILE}.%d{yyyy-MM-dd}.json</fileNamePattern>
-            <maxHistory>14</maxHistory>
-        </rollingPolicy>
+    <appender name="JSON_STDOUT" class="ch.qos.logback.core.ConsoleAppender">
         <encoder class="net.logstash.logback.encoder.LogstashEncoder"/>
     </appender>
 
@@ -60,18 +38,21 @@
 
     <!-- 루트 로거 -->
     <root level="INFO">
-        <appender-ref ref="CONSOLE" />
-        <appender-ref ref="FILE" />
-        <appender-ref ref="JSON_FILE" />
+        <appender-ref ref="CSV_FILE"/>
+        <appender-ref ref="JSON_STDOUT"/>
     </root>
+
+    <logger name="ERROR_LOGGER" level="ERROR" additivity="false">
+        <appender-ref ref="CSV_FILE"/>
+        <appender-ref ref="JSON_STDOUT"/>
+    </logger>
 
     <!-- UserController 클래스에 대한 로거 -->
     <logger level="INFO"
             name="com.three.recipingbackofficeservicebe.recipe_management.controller.AdminRecipeController"
-            additivity="false"> <!-- (additivity 는 상위 패키지 로그 전파 여부)-->
+            additivity="false">
         <appender-ref ref="ADMIN_RECIPE_CONTROLLER_LOG" />
-        <appender-ref ref="ADMIN_RECIPE_CONTROLLER_JSON_LOG" />
+        <appender-ref ref="JSON_STDOUT" />
     </logger>
-
 
 </configuration>
