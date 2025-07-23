@@ -1,26 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <configuration scan="true">
 
-    <!-- 절대 경로 설정 -->
-    <property name="LOG_PATH" value="/var/log/reciping/backoffice-service"/> <!-- 디렉토리 경로 -> 여기에 로그가 저장 -->
-
-    <!-- 콘솔 로그 Appender -->
-    <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
-        <encoder>
-            <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level [%X{traceId}] %logger{36} - %msg%n</pattern>
-        </encoder>
-    </appender>
-
     <appender name="JSON_STDOUT" class="ch.qos.logback.core.ConsoleAppender">
-        <encoder class="net.logstash.logback.encoder.LogstashEncoder"/>
-    </appender>
-
-    <appender name="ADMIN_RECIPE_CONTROLLER_JSON_LOG" class="ch.qos.logback.core.rolling.RollingFileAppender">
-        <file>${LOG_PATH}/Admin_Recipe_Controller.json</file>
-        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
-            <fileNamePattern>${LOG_PATH}/LikeController.%d{yyyy-MM-dd}.json</fileNamePattern>
-            <maxHistory>30</maxHistory>
-        </rollingPolicy>
         <encoder class="net.logstash.logback.encoder.LogstashEncoder"/>
     </appender>
 
@@ -37,7 +18,6 @@
     <logger level="INFO"
             name="com.three.recipingbackofficeservicebe.recipe_management.controller.AdminRecipeController"
             additivity="false">
-        <appender-ref ref="ADMIN_RECIPE_CONTROLLER_JSON_LOG" />
         <appender-ref ref="JSON_STDOUT" />
     </logger>
 
